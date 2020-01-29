@@ -1,5 +1,4 @@
 #
-#
 # @(!--#) @(#) ghpush.py, version 001, 29-january-2020
 #
 # a Python windows version of the ghpush expect script
@@ -16,15 +15,15 @@ import pyautogui
 
 ########################################################################
 
-PASSWORD_ENV_VAR_NAME   = 'GHPASS'
-GIT_CONFIG_FILE         = '.gitconfig'
-CLEAR_SCREEN_LINE_TOTAL = 100
-GIT_EXECUTABLE          = 'C:\\Program Files\\Git\\cmd\\git.exe'
-### GHPUSH_STRING           = '>>@(!--#<<'
-GHPUSH_STRING           = '~~@(!--#~~'
-GHPUSH_IMAGE            = 'ghpush.png'
-GHPUSH_USERNAME_IMAGE   = 'ghuser.png'
-GHPUSH_PASSWORD_IMAGE   = 'ghpass.png'
+GHPUSH_HOME_ENV_VAR_NAME = 'GHHOME'
+PASSWORD_ENV_VAR_NAME    = 'GHPASS'
+GIT_CONFIG_FILE          = '.gitconfig'
+CLEAR_SCREEN_LINE_TOTAL  = 100
+GIT_EXECUTABLE           = 'C:\\Program Files\\Git\\cmd\\git.exe'
+GHPUSH_STRING            = '~~@(!--#~~'
+GHPUSH_IMAGE             = 'ghpush.png'
+GHPUSH_USERNAME_IMAGE    = 'ghuser.png'
+GHPUSH_PASSWORD_IMAGE    = 'ghpass.png'
 
 ########################################################################
 
@@ -91,7 +90,7 @@ def rungit():
 
 ########################################################################
 
-def drivegit(git_thread, region, username, password):
+def drivegit(git_thread, region, username, password, ghpushhome):
     usernamesent = False
     passwordsent = False
     
@@ -102,7 +101,7 @@ def drivegit(git_thread, region, username, password):
         screenshot = pyautogui.screenshot(region=region)
         
         if usernamesent == False:
-            dummy = pyautogui.locate(GHPUSH_USERNAME_IMAGE, screenshot, grayscale=False)
+            dummy = pyautogui.locate(ghpushhome + '\\' + GHPUSH_USERNAME_IMAGE, screenshot, grayscale=False)
             
             if dummy != None:
                 pyautogui.write(username)
@@ -110,7 +109,7 @@ def drivegit(git_thread, region, username, password):
                 usernamesent = True
         
         if passwordsent == False:
-            dummy = pyautogui.locate(GHPUSH_PASSWORD_IMAGE, screenshot, grayscale=False)
+            dummy = pyautogui.locate(ghpushhome + '\\' + GHPUSH_PASSWORD_IMAGE, screenshot, grayscale=False)
             
             if dummy != None:
                 pyautogui.write(password)
@@ -125,6 +124,12 @@ def drivegit(git_thread, region, username, password):
 
 def main():
     global progname
+    
+    try:
+        ghpushhome = os.environ[GHPUSH_HOME_ENV_VAR_NAME]
+    except KeyError:
+        print('{}: environment variable "{}" is not defined'.format(progname, GHPUSH_HOME_ENV_VAR_NAME), file=sys.stderr)
+        sys.exit(1)
     
     try:
         password = os.environ[PASSWORD_ENV_VAR_NAME]
@@ -151,7 +156,7 @@ def main():
 
     imagecount = 0
     
-    for thisregion in pyautogui.locateAllOnScreen(GHPUSH_IMAGE, grayscale=False):
+    for thisregion in pyautogui.locateAllOnScreen(ghpushhome + '\\' + GHPUSH_IMAGE, grayscale=False):
         imagecount += 1
         if imagecount == 1:
             region = thisregion
@@ -170,7 +175,7 @@ def main():
 
     git_thread     = threading.Thread(target=rungit, args=())    
     
-    driving_thread = threading.Thread(target=drivegit, args=(git_thread, region, username, password))
+    driving_thread = threading.Thread(target=drivegit, args=(git_thread, region, username, password, ghpushhome))
     
     git_thread.start()
     driving_thread.start()
