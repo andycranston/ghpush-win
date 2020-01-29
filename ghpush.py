@@ -16,13 +16,63 @@ import pyautogui
 
 ########################################################################
 
-PASSWORD_ENV_VAR_NAME = 'GHPASS'
+PASSWORD_ENV_VAR_NAME   = 'GHPASS'
+GIT_CONFIG_FILE         = '.gitconfig'
 CLEAR_SCREEN_LINE_TOTAL = 100
-GIT_EXECUTABLE = 'C:\\Program Files\\Git\\cmd\\git.exe'
-GHPUSH_STRING = '>>@(!--#<<'
-GHPUSH_IMAGE = 'ghpush.png'
-GHPUSH_USERNAME_IMAGE = 'ghuser.png'
-GHPUSH_PASSWORD_IMAGE = 'ghpass.png'
+GIT_EXECUTABLE          = 'C:\\Program Files\\Git\\cmd\\git.exe'
+### GHPUSH_STRING           = '>>@(!--#<<'
+GHPUSH_STRING           = '~~@(!--#~~'
+GHPUSH_IMAGE            = 'ghpush.png'
+GHPUSH_USERNAME_IMAGE   = 'ghuser.png'
+GHPUSH_PASSWORD_IMAGE   = 'ghpass.png'
+
+########################################################################
+
+def gitusername():
+    try:
+        profile = os.environ['USERPROFILE']
+    except KeyError:
+        return ''
+        
+    if profile == '':
+        return ''
+        
+    gitconfigfilename = profile + '\\' + GIT_CONFIG_FILE
+    
+    try:
+        gitconfig = open(gitconfigfilename, 'r', encoding='utf-8')
+    except IOError:
+        return ''
+        
+    username = ''
+    sectionname = ''
+    
+    for line in gitconfig:
+        line = line.strip()
+        
+        if len(line) < 3:
+            continue
+        
+        if (line[0] == '[') and (line[-1] == ']'):
+            sectionname = line
+            continue
+
+        words = line.split()
+        
+        if len(words) != 3:
+            continue
+        
+        if words[1] != '=':
+            continue
+            
+        if sectionname == '[user]':
+            if words[0] == 'name':
+                username = words[2]
+                break
+    
+    gitconfig.close()
+    
+    return username
 
 ########################################################################
 
@@ -42,15 +92,11 @@ def rungit():
 ########################################################################
 
 def drivegit(git_thread, region, username, password):
-    time.sleep(2.0)
-    ### print('This code will drive the git command')
-
     usernamesent = False
     passwordsent = False
     
     while (usernamesent == False) or (passwordsent == False):
         if not git_thread.is_alive():
-            print('The git command has completed')
             break
 
         screenshot = pyautogui.screenshot(region=region)
@@ -71,7 +117,7 @@ def drivegit(git_thread, region, username, password):
                 pyautogui.press('enter')
                 passwordsent = True
         
-        time.sleep(1.0)                
+        time.sleep(0.1)                
     
     return
 
@@ -89,10 +135,17 @@ def main():
     if password == '':
         print('{}: environment variable "{}" is the null string'.format(progname, PASSWORD_ENV_VAR_NAME), file=sys.stderr)
         sys.exit(1)
+    
+    username = gitusername()
+    
+    if username == '':
+        print('{}: unable to determine github username'.format(progname), file=sys.stderr)
+        sys.exit(1)
         
     cls()
         
-    print(GHPUSH_STRING, end='', flush=True)
+    ### print('\x1b[1;32;40m{}'.format(GHPUSH_STRING), end='', flush=True)
+    print('{}'.format(GHPUSH_STRING), end='', flush=True)
     
     time.sleep(0.1)
 
@@ -113,12 +166,11 @@ def main():
         print('{}: error - more than one ({}) unique GHPUSH locator images found'.format(progname, imagecount), file=sys.stderr)
         sys.exit(1)
 
-    print('Region is {}'.format(region))        
-        
-    
+    ### print('Region is {}'.format(region))        
+
     git_thread     = threading.Thread(target=rungit, args=())    
     
-    driving_thread = threading.Thread(target=drivegit, args=(git_thread, region, 'andycranston', password))
+    driving_thread = threading.Thread(target=drivegit, args=(git_thread, region, username, password))
     
     git_thread.start()
     driving_thread.start()
@@ -126,7 +178,7 @@ def main():
     git_thread.join()
     driving_thread.join()
     
-    return
+    return 0
 
 ########################################################################
 
