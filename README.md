@@ -49,9 +49,9 @@ Copy the following files to this directory:
 ```
 ghpass.png
 ghpush.bat
-ghpush.py
 ghpush.png
-ghpass.png
+ghpush.py
+ghuser.png
 ```
 
 Next edit the file:
@@ -83,7 +83,7 @@ have write access to.
 First make sure you have set the `GHPASS` environment variable to hold your
 current Github account password.
 
-Next whenever you would type:
+Now whenever you would type:
 
 ```
 git push origin master
